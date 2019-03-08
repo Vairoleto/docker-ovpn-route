@@ -134,6 +134,9 @@ docker run -d \
 --restart unless-stopped \
 kylemanna/openvpn
 
+# Create a simple txt file to store all (last octet) ip assigned
+docker exec -d $empresa.openvpn /bin/bash -c "touch /etc/openvpn/ccd/ips.txt"
+
 # Add route so the host knows that all openvpn clients of this empresa are on this container
 sudo ip route add 10.247.$subnet.0/24 via 10.246.0.$dockernet
 
@@ -211,6 +214,9 @@ docker run -d \
 -p $port:1194/$proto --cap-add=NET_ADMIN \
 --restart unless-stopped \
 kylemanna/openvpn
+
+# Create a simple txt file to store all (last octet) ip assigned
+docker exec -d $empresa.openvpn /bin/bash -c "touch /etc/openvpn/ccd/ips.txt"
 
 # Add route so the host knows that all openvpn clients of this empresa are on this container
 sudo ip route add 10.247.$subnet.0/24 via 10.246.0.$dockernet
