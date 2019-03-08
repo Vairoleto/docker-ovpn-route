@@ -88,8 +88,20 @@ docker run -d -v ovpn.cifs:/mnt/openvpn --name=ovpn.cifs --privileged --cap-add=
 # copiar script de openvpn
 cp ./openvpn/procom-ovpn-para-clientes.bash /usr/bin/openvpn
 chmod +x /usr/bin/openvpn
+docker_network
+}
+
+docker_network()
+{
+# crear una red bridge para todos los containers con openvpn, necesario para podere enrutar trafico hacia clientes.   
+    docker network create \
+     --driver=bridge \
+     --subnet=10.246.0.0/24 \
+     --gateway=10.246.0.1 \
+     openvpn 
 datos_domain
 }
+
 
 datos_domain()
 {

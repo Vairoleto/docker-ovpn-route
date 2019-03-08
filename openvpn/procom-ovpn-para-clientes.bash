@@ -91,12 +91,27 @@ fi
 
 alta_empresa_sin_dns ()
 {
+
+# Estoy seguro que existe una mejor forma de elegir un octeto para la subred y que no este en uso, pero por ahora es lo que vamos a usar.
+subnet=$(shuf -i 0-255 -n 1)
+while  docker exec -it ovpn.db sqlite3 /database/ovpn.db "SELECT EXISTS(SELECT 1 FROM empresa WHERE subnet=$subnet COLLATE NOCASE);" | grep -q '1'
+do
+  subnet=$(shuf -i 0-255 -n 1)
+done
+
+# Estoy seguro que existe una mejor forma de elegir un octeto para la subred y que no este en uso, pero por ahora es lo que vamos a usar.
+dockernet=$(shuf -i 2-254 -n 1)
+while  docker exec -it ovpn.db sqlite3 /database/ovpn.db "SELECT EXISTS(SELECT 1 FROM empresa WHERE dockernet=$dockernet COLLATE NOCASE);" | grep -q '1'
+do
+  dockernet=$(shuf -i 2-254 -n 1)
+done
+
 echo -e "\e[33mCargando config de servidor OpenVpn.\e[0m"
 docker run \
 -v $empresa.openvpn:/etc/openvpn \
 --rm kylemanna/openvpn ovpn_genconfig \
 -u $proto://$empresa:$port \
--s 172.30.0.0/16 \
+-s 10.247.$subnet.0/24 \
 -d -D -N \
 echo ""
 echo ""
@@ -112,10 +127,15 @@ docker run -v $empresa.openvpn:/etc/openvpn \
 echo -e "\e[33mCreando contenedor de servicio OpenVpn\e[0m"
 docker run -d \
 --name $empresa.openvpn \
+--network=openvpn \
+--ip=10.246.0.$dockernet \
 -v $empresa.openvpn:/etc/openvpn \
 -p $port:1194/$proto --cap-add=NET_ADMIN \
 --restart unless-stopped \
 kylemanna/openvpn
+
+# Add route so the host knows that all openvpn clients of this empresa are on this container
+sudo ip route add 10.247.$subnet.0/24 via 10.246.0.$dockernet
 
 # We need to reload iptables rules after every restart and every new network added.
 docker exec -d $empresa.openvpn /bin/bash -c "sed -i '3ifi' /usr/local/bin/ovpn_run ; sed -i '3iiptables-restore /etc/openvpn/iptables.rules.v4' /usr/local/bin/ovpn_run ; sed -i '3iif [  -f /etc/openvpn/iptables.rules.v4 ]; then' /usr/local/bin/ovpn_run ; sed -i '3i# Load iptables rules' /usr/local/bin/ovpn_run" 
@@ -129,7 +149,7 @@ docker exec -d $empresa.openvpn /bin/bash -c "iptables -i tun0 -A FORWARD -j DRO
 # save those iptables changes
 docker exec -d $empresa.openvpn /bin/bash -c "iptables-save > /etc/openvpn/iptables.rules.v4"
 
-docker exec -it ovpn.db sqlite3 /database/ovpn.db "INSERT INTO EMPRESA (NOMBRE,PUERTO,PROTO) VALUES ('$empresa', '$port', '$proto');"
+docker exec -it ovpn.db sqlite3 /database/ovpn.db "INSERT INTO EMPRESA (NOMBRE,PUERTO,PROTO,SUBNET,DOCKERNET) VALUES ('$empresa', '$port', '$proto', '$subnet', '$dockernet');"
 
 docker run -v ovpn.cifs:/perfiles --rm -it alpine sh -c "mkdir /perfiles/$empresa" && docker exec ovpn.cifs /bin/sh -c "rsync -a /mnt/openvpn/ /mnt/winshare"
 
@@ -140,6 +160,21 @@ docker restart $empresa.openvpn
 
 alta_empresa_con_dns()
 {
+
+# Estoy seguro que existe una mejor forma de elegir un octeto para la subred y que no este en uso, pero por ahora es lo que vamos a usar.
+subnet=$(shuf -i 0-255 -n 1)
+while  docker exec -it ovpn.db sqlite3 /database/ovpn.db "SELECT EXISTS(SELECT 1 FROM empresa WHERE subnet=$subnet COLLATE NOCASE);" | grep -q '1'
+do
+  subnet=$(shuf -i 0-255 -n 1)
+done
+
+# Estoy seguro que existe una mejor forma de elegir un octeto para la subred y que no este en uso, pero por ahora es lo que vamos a usar.
+dockernet=$(shuf -i 2-254 -n 1)
+while  docker exec -it ovpn.db sqlite3 /database/ovpn.db "SELECT EXISTS(SELECT 1 FROM empresa WHERE dockernet=$dockernet COLLATE NOCASE);" | grep -q '1'
+do
+  dockernet=$(shuf -i 2-254 -n 1)
+done
+
 echo -e "\e[34mIngrese la ip del servidor DNS que usara $empresa (ej: 192.168.121.6): \e[0m"
 read ipdns
 echo -e "\e[34mIngrese el nombre de dominio de busqueda (ej: dominio.local): \e[0m"
@@ -151,7 +186,7 @@ docker run \
 -v $empresa.openvpn:/etc/openvpn \
 --rm kylemanna/openvpn ovpn_genconfig \
 -u $proto://$empresa:$port \
--s 172.30.0.0/16 \
+-s 10.247.$subnet.0/24 \
 -d -D -N \
 -p "route $ippriv $mask"
 
@@ -170,10 +205,15 @@ docker run -v $empresa.openvpn:/etc/openvpn \
 echo -e "\e[33mCreando contenedor de servicio OpenVpn\e[0m"
 docker run -d \
 --name $empresa.openvpn \
+--network=openvpn \
+--ip=10.246.0.$dockernet \
 -v $empresa.openvpn:/etc/openvpn \
 -p $port:1194/$proto --cap-add=NET_ADMIN \
 --restart unless-stopped \
 kylemanna/openvpn
+
+# Add route so the host knows that all openvpn clients of this empresa are on this container
+sudo ip route add 10.247.$subnet.0/24 via 10.246.0.$dockernet
 
 # We need to reload iptables rules after every restart and every new network added.
 docker exec -d $empresa.openvpn /bin/bash -c "sed -i '3ifi' /usr/local/bin/ovpn_run ; sed -i '3iiptables-restore /etc/openvpn/iptables.rules.v4' /usr/local/bin/ovpn_run ; sed -i '3iif [  -f /etc/openvpn/iptables.rules.v4 ]; then' /usr/local/bin/ovpn_run ; sed -i '3i# Load iptables rules' /usr/local/bin/ovpn_run" 
@@ -187,7 +227,7 @@ docker exec -d $empresa.openvpn /bin/bash -c "iptables -i tun0 -A FORWARD -j DRO
 # save those iptables changes
 docker exec -d $empresa.openvpn /bin/bash -c "iptables-save > /etc/openvpn/iptables.rules.v4"
 
-docker exec -it ovpn.db sqlite3 /database/ovpn.db "INSERT INTO EMPRESA (NOMBRE,PUERTO,PROTO) VALUES ('$empresa', '$port', '$proto');"
+docker exec -it ovpn.db sqlite3 /database/ovpn.db "INSERT INTO EMPRESA (NOMBRE,PUERTO,PROTO,SUBNET,DOCKERNET) VALUES ('$empresa', '$port', '$proto', '$subnet', '$dockernet');"
 
 docker run -v ovpn.cifs:/perfiles --rm -it alpine sh -c "mkdir /perfiles/$empresa" && docker exec ovpn.cifs /bin/sh -c "rsync -a /mnt/openvpn/ /mnt/winshare"
 
