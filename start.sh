@@ -5,9 +5,6 @@ red=$(tput setaf 1)
 yellow=$(tput setaf 3)
 normal=$(tput sgr0)
 
-#printf "${red}This text is red${normal}"
-
-
 
 if [ "$EUID" -ne 0 ]
   then echo -e "\e[31mParece que no tenes los permisos necesarios, tal vez un "sudo" ayude?\e[0m"
