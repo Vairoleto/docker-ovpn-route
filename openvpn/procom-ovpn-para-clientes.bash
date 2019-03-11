@@ -258,7 +258,17 @@ if docker exec -it ovpn.db sqlite3 /database/ovpn.db "SELECT EXISTS(SELECT 1 FRO
         [Nn]* ) docker run -v $empresa.openvpn:/etc/openvpn --rm -it kylemanna/openvpn easyrsa build-client-full $empresa-$acceso nopass;;
         * ) echo -e "\e[31mPor favor responda y o n .\e[0m";;
     esac
-				docker run -v ovpn.cifs:/perfiles -v $empresa.openvpn:/etc/openvpn -v openvpn.files.bin:/usr/local/bin --rm -it kylemanna/openvpn ovpn_getclient $empresa-$acceso combined-save && docker exec ovpn.cifs /bin/sh -c "rsync -a /mnt/openvpn/ /mnt/winshare"
+				docker run -v ovpn.cifs:/perfiles -v $empresa.openvpn:/etc/openvpn -v openvpn.files.bin:/usr/local/bin --rm -it kylemanna/openvpn ovpn_getclient $empresa-$acceso combined-save && docker exec ovpn.cifs /bin/sh -c "rsync -a /mnt/openvpn/ /mnt/winshare";
+                                # Estoy seguro que existe una mejor forma de elegir un octeto para la subred y que no este en uso, pero por ahora es lo que vamos a usar.
+                                ipClient=$(shuf -i 10-240 -n 1)
+                                while docker exec -it $empresa.openvpn /bin/bash -c "grep -Fxq $ipClient /etc/openvpn/ccd/ips.txt"
+                                        do
+                                        ipClient=$(shuf -i 10-240 -n 1)
+                                        done
+                                docker exec -it $empresa.openvpn /bin/bash -c "echo $ipClient >> /etc/openvpn/ccd/ips.txt";
+                                docker exec -it $empresa.openvpn /bin/bash -c "touch /etc/openvpn/ccd/$empresa-$acceso";
+                                docker exec -it $empresa.openvpn /bin/bash -c "echo '10.247.$subnet.$ipClient 255.255.255.0' >> /etc/openvpn/ccd/$empresa-$acceso"
+
         else
                 echo -e "\e[31mla empresa $empresa no se encuentra dada de alta.\e[0m"
 fi
@@ -276,8 +286,12 @@ if docker exec -it ovpn.db sqlite3 /database/ovpn.db "SELECT EXISTS(SELECT 1 FRO
         then
 read -p $'\e[31mVoy a dar de baja el acceso indicado estas seguro? (y/n) \e[0m' yn
     case $yn in
-        [Yy]* ) docker run -v ovpn.cifs:/perfiles -v $empresa.openvpn:/etc/openvpn --rm -it kylemanna/openvpn easyrsa revoke $empresa-$acceso && docker run -v $empresa.openvpn:/etc/openvpn --rm -it kylemanna/openvpn easyrsa gen-crl && docker run -v ovpn.cifs:/perfiles --rm -it alpine sh -c "mv /perfiles/$empresa/$empresa-$acceso.ovpn /perfiles/$empresa/[REVOKED]$empresa-$acceso.ovpn" && docker exec ovpn.cifs /bin/sh -c "rsync -a /mnt/openvpn/ /mnt/winshare" ;;
-		[Nn]* ) echo -e "\e[31mTarea cancelada\e[0m" && exit;;
+        [Yy]* ) docker run -v ovpn.cifs:/perfiles -v $empresa.openvpn:/etc/openvpn --rm -it kylemanna/openvpn easyrsa revoke $empresa-$acceso && \
+                docker run -v $empresa.openvpn:/etc/openvpn --rm -it kylemanna/openvpn easyrsa gen-crl && \
+                docker run -v ovpn.cifs:/perfiles --rm -it alpine sh -c "mv /perfiles/$empresa/$empresa-$acceso.ovpn /perfiles/$empresa/[REVOKED]$empresa-$acceso.ovpn" && \
+                docker exec ovpn.cifs /bin/sh -c "rsync -a /mnt/openvpn/ /mnt/winshare" &&
+                docker exec -it $empresa.openvpn /bin/bash -c "rm -rf /etc/openvpn/ccd/$empresa-$acceso" ;;
+	[Nn]* ) echo -e "\e[31mTarea cancelada\e[0m" && exit;;
         * ) echo -e "\e[31mPor favor responda y o n .\e[0m";;
     esac
         else
@@ -335,24 +349,26 @@ fi
 alta_acceso_bulk()
 {
 echo -e "\e[34m================ Alta Acceso Bulk ================\e[0m"
-echo -e "\e[34mIngrese nombre de la empresa: \e[0m"
-read empresa
-echo -e "\e[34mIngrese el primer numero de acceso: \e[0m"
-read primer_acceso
-echo -e "\e[34mIngrese el utlimo numero de acceso: \e[0m"
-read ultimo_acceso
-if docker exec -it ovpn.db sqlite3 /database/ovpn.db "SELECT EXISTS(SELECT 1 FROM empresa WHERE nombre='$empresa' COLLATE NOCASE);" | grep -q '1';
-        then
-                read -p $'\e[34mQuiere que el perfil solicite password? (y/n): \e[0m' yn
-    case $yn in
-        [Yy]* ) for i in $(seq $primer_acceso $ultimo_acceso); do docker run -v $empresa.openvpn:/etc/openvpn --rm -it kylemanna/openvpn easyrsa build-client-full $empresa-$i ; done;;
-        [Nn]* ) for i in $(seq $primer_acceso $ultimo_acceso); do docker run -v $empresa.openvpn:/etc/openvpn --rm -it kylemanna/openvpn easyrsa build-client-full $empresa-$i nopass ; done;;
-        * ) echo -e "\e[31mPor favor responda y o n .\e[0m";;
-    esac
-                for i in $(seq $primer_acceso $ultimo_acceso); do docker run -v ovpn.cifs:/perfiles -v $empresa.openvpn:/etc/openvpn -v openvpn.files.bin:/usr/local/bin --rm -it kylemanna/openvpn ovpn_getclient $empresa-$i combined-save ; done && docker exec ovpn.cifs /bin/sh -c "rsync -a /mnt/openvpn/ /mnt/winshare"
-        else
-                echo -e "\e[31mla empresa $empresa no se encuentra dada de alta.\e[0m"
-fi
+echo -e "\e[31m================ ESTA OPCION NO SE ENCUENTRA DISPONIBLE EN ESTA VERSION, POR FAVOR ENVIE UN CORREO A GGABAS@PROCOMARGENTINA.COM SOLICITANDOLO ================\e[0m"
+main_menu
+#echo -e "\e[34mIngrese nombre de la empresa: \e[0m"
+#read empresa
+#echo -e "\e[34mIngrese el primer numero de acceso: \e[0m"
+#read primer_acceso
+#echo -e "\e[34mIngrese el utlimo numero de acceso: \e[0m"
+#read ultimo_acceso
+#if docker exec -it ovpn.db sqlite3 /database/ovpn.db "SELECT EXISTS(SELECT 1 FROM empresa WHERE nombre='$empresa' COLLATE NOCASE);" | grep -q '1';
+#        then
+#                read -p $'\e[34mQuiere que el perfil solicite password? (y/n): \e[0m' yn
+#    case $yn in
+#        [Yy]* ) for i in $(seq $primer_acceso $ultimo_acceso); do docker run -v $empresa.openvpn:/etc/openvpn --rm -it kylemanna/openvpn easyrsa build-client-full $empresa-$i ; done;;
+#        [Nn]* ) for i in $(seq $primer_acceso $ultimo_acceso); do docker run -v $empresa.openvpn:/etc/openvpn --rm -it kylemanna/openvpn easyrsa build-client-full $empresa-$i nopass ; done;;
+#        * ) echo -e "\e[31mPor favor responda y o n .\e[0m";;
+#    esac
+#                for i in $(seq $primer_acceso $ultimo_acceso); do docker run -v ovpn.cifs:/perfiles -v $empresa.openvpn:/etc/openvpn -v openvpn.files.bin:/usr/local/bin --rm -it kylemanna/openvpn ovpn_getclient $empresa-$i combined-save ; done && docker exec ovpn.cifs /bin/sh -c "rsync -a /mnt/openvpn/ /mnt/winshare"
+#        else
+#                echo -e "\e[31mla empresa $empresa no se encuentra dada de alta.\e[0m"
+#fi
 }
 
 lista_conectados()
