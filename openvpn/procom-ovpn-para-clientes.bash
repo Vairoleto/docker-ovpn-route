@@ -62,6 +62,10 @@ fi
 
 alta_empresa()
 {
+if [ "$EUID" -ne 0 ]
+  then echo -e "\e[31mParece que no tenes los permisos necesarios, para crear nuevas empresas es necesario realizar configuraciones a nivel host y solo un usuario sudoer podra hacerlo\e[0m"
+  main_menu
+fi
 echo -e "\e[34m================ Alta Empresa ================\e[0m"
 echo ""
 echo -e "\e[34mIngrese nombre de la empresa: \e[0m"
@@ -112,7 +116,7 @@ docker run \
 --rm kylemanna/openvpn ovpn_genconfig \
 -u $proto://$empresa:$port \
 -s 10.247.$subnet.0/24 \
--d -D -N \
+-d -D -t \
 echo ""
 echo ""
 echo -e "\e[33mGenerando llaves para servidor OpenVpn\e[0m"
@@ -190,7 +194,7 @@ docker run \
 --rm kylemanna/openvpn ovpn_genconfig \
 -u $proto://$empresa:$port \
 -s 10.247.$subnet.0/24 \
--d -D -N \
+-d -D -t \
 -p "route $ippriv $mask"
 
 echo ""
@@ -265,11 +269,11 @@ if docker exec -it ovpn.db sqlite3 /database/ovpn.db "SELECT EXISTS(SELECT 1 FRO
                                         do
                                         ipClient=$(shuf -i 10-240 -n 1)
                                         done
+                                subnet=$(docker exec -it ovpn.db sqlite3 /database/ovpn.db  "SELECT subnet FROM empresa WHERE nombre='$empresa';");        
                                 docker exec -it $empresa.openvpn /bin/bash -c "echo $ipClient >> /etc/openvpn/ccd/ips.txt";
                                 docker exec -it $empresa.openvpn /bin/bash -c "touch /etc/openvpn/ccd/$empresa-$acceso";
-                                docker exec -it $empresa.openvpn /bin/bash -c "echo '10.247.$subnet.$ipClient 255.255.255.0' >> /etc/openvpn/ccd/$empresa-$acceso"
-
-        else
+                                docker exec -it $empresa.openvpn /bin/bash -c "echo '10.247.$subnet.$ipClient 255.255.255.0' >> /etc/openvpn/ccd/$empresa-$acceso";
+else
                 echo -e "\e[31mla empresa $empresa no se encuentra dada de alta.\e[0m"
 fi
 }
@@ -306,6 +310,10 @@ tput clear
 
 agrega_server()
 {
+if [ "$EUID" -ne 0 ]
+  then echo -e "\e[31mParece que no tenes los permisos necesarios, para crear agregar subredes es necesario realizar configuraciones a nivel host y solo un usuario sudoer podra hacerlo\e[0m"
+  main_menu
+fi
 echo -e "\e[34m================ Agregar Server ================\e[0m"
 echo ""
 if [ -z "$empresa" ];
@@ -326,6 +334,9 @@ if [ -z "$empresa" ];
                 read mask
                 docker exec $empresa.openvpn bash -c "echo push \'route $ippriv $mask\' >> /etc/openvpn/openvpn.conf";
                 docker exec -d $empresa.openvpn /bin/bash -c "iptables -i tun0 -I FORWARD 1 -d $ippriv/$mask -j ACCEPT"
+                subnet=$(docker exec -it ovpn.db sqlite3 /database/ovpn.db  "SELECT subnet FROM empresa WHERE nombre='$empresa';");
+                sudo ip route add 10.247.$subnet.0/24 via 10.246.0.$dockernet
+                sudo iptables -I DOCKER -s $ippriv/$mask -d 10.247.$subnet.0/24 -j ACCEPT
                 echo -e "\e[34mQuiere agregar otro servidor a $empresa? (y/n): \e[0m"
 fi
 read answer
