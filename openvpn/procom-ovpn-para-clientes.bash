@@ -63,7 +63,7 @@ fi
 alta_empresa()
 {
 if [ "$EUID" -ne 0 ]
-  then echo -e "\e[31mParece que no tenes los permisos necesarios, para crear nuevas empresas es necesario realizar configuraciones a nivel host y solo un usuario sudoer podra hacerlo\e[0m"
+  then echo -e "\e[31mParece que no tenes los permisos necesarios, para crear nuevas empresas es necesario realizar configuraciones a nivel host y solo un usuario SUDOER podra hacerlo\e[0m"
   main_menu
 fi
 echo -e "\e[34m================ Alta Empresa ================\e[0m"
@@ -269,10 +269,10 @@ if docker exec -it ovpn.db sqlite3 /database/ovpn.db "SELECT EXISTS(SELECT 1 FRO
                                         do
                                         ipClient=$(shuf -i 10-240 -n 1)
                                         done
-                                subnet=$(docker exec -it ovpn.db sqlite3 /database/ovpn.db  "SELECT subnet FROM empresa WHERE nombre='$empresa';");        
+                                subnet=$(docker exec -it ovpn.db sqlite3 /database/ovpn.db  "SELECT subnet FROM empresa WHERE nombre='$empresa';")     
                                 docker exec -it $empresa.openvpn /bin/bash -c "echo $ipClient >> /etc/openvpn/ccd/ips.txt";
                                 docker exec -it $empresa.openvpn /bin/bash -c "touch /etc/openvpn/ccd/$empresa-$acceso";
-                                docker exec -it $empresa.openvpn /bin/bash -c "echo '10.247.$subnet.$ipClient 255.255.255.0' >> /etc/openvpn/ccd/$empresa-$acceso";
+                                docker exec -it $empresa.openvpn /bin/bash -c "echo '10.247.$subnet.$ipClient 255.255.255.0' >> /etc/openvpn/ccd/$empresa-$acceso"
 else
                 echo -e "\e[31mla empresa $empresa no se encuentra dada de alta.\e[0m"
 fi
@@ -311,7 +311,7 @@ tput clear
 agrega_server()
 {
 if [ "$EUID" -ne 0 ]
-  then echo -e "\e[31mParece que no tenes los permisos necesarios, para crear agregar subredes es necesario realizar configuraciones a nivel host y solo un usuario sudoer podra hacerlo\e[0m"
+  then echo -e "\e[31mParece que no tenes los permisos necesarios, para crear agregar subredes es necesario realizar configuraciones a nivel host y solo un usuario SUDOER podra hacerlo\e[0m"
   main_menu
 fi
 echo -e "\e[34m================ Agregar Server ================\e[0m"
