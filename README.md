@@ -1,4 +1,4 @@
-# docker-ovpn
+# docker-ovpn-route
 alpine docker containers that ease the management of openvpn on docker
 
 Just clone this repo
