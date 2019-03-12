@@ -294,10 +294,12 @@ if docker exec -it ovpn.db sqlite3 /database/ovpn.db "SELECT EXISTS(SELECT 1 FRO
         then
 read -p $'\e[31mVoy a dar de baja el acceso indicado estas seguro? (y/n) \e[0m' yn
     case $yn in
-        [Yy]* ) docker run -v ovpn.cifs:/perfiles -v $empresa.openvpn:/etc/openvpn --rm -it kylemanna/openvpn easyrsa revoke $empresa-$acceso && \
-                docker run -v $empresa.openvpn:/etc/openvpn --rm -it kylemanna/openvpn easyrsa gen-crl && \
-                docker run -v ovpn.cifs:/perfiles --rm -it alpine sh -c "mv /perfiles/$empresa/$empresa-$acceso.ovpn /perfiles/$empresa/[REVOKED]$empresa-$acceso.ovpn" && \
-                docker exec ovpn.cifs /bin/sh -c "rsync -a /mnt/openvpn/ /mnt/winshare" &&
+        [Yy]* ) docker run -v ovpn.cifs:/perfiles -v $empresa.openvpn:/etc/openvpn --rm -it kylemanna/openvpn easyrsa revoke $empresa-$acceso;
+                docker run -v $empresa.openvpn:/etc/openvpn --rm -it kylemanna/openvpn easyrsa gen-crl;
+                docker run -v ovpn.cifs:/perfiles --rm -it alpine sh -c "mv /perfiles/$empresa/$empresa-$acceso.ovpn /perfiles/$empresa/[REVOKED]$empresa-$acceso.ovpn";
+                docker exec ovpn.cifs /bin/sh -c "rsync -a /mnt/openvpn/ /mnt/winshare";
+                ipClient=$(docker exec -it $empresa.openvpn /bin/bash -c "more /etc/openvpn/ccd/$empresa-$acceso" |  awk  '{print $2}' | awk -F"." '{print $4}');
+                docker exec -it $empresa.openvpn /bin/bash -c "sed -i 's/$ipClient//g' /etc/openvpn/ccd/ips.txt";
                 docker exec -it $empresa.openvpn /bin/bash -c "rm -rf /etc/openvpn/ccd/$empresa-$acceso" ;;
 	[Nn]* ) echo -e "\e[31mTarea cancelada\e[0m" && exit;;
         * ) echo -e "\e[31mPor favor responda y o n .\e[0m";;
