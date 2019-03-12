@@ -116,6 +116,7 @@ docker run \
 --rm kylemanna/openvpn ovpn_genconfig \
 -u $proto://$empresa:$port \
 -s 10.247.$subnet.0/24 \
+-e "client-config-dir /etc/openvpn/ccd" \
 -d -D -t \
 echo ""
 echo ""
@@ -195,6 +196,7 @@ docker run \
 -u $proto://$empresa:$port \
 -s 10.247.$subnet.0/24 \
 -d -D -t \
+-e "client-config-dir /etc/openvpn/ccd" \
 -p "route $ippriv $mask"
 
 echo ""
@@ -272,7 +274,7 @@ if docker exec -it ovpn.db sqlite3 /database/ovpn.db "SELECT EXISTS(SELECT 1 FRO
                                 subnet=$(docker exec -it ovpn.db sqlite3 /database/ovpn.db  "SELECT subnet FROM empresa WHERE nombre='$empresa';" | sed 's/[^0-9]*//g'); 
                                 docker exec -it $empresa.openvpn /bin/bash -c "echo $ipClient >> /etc/openvpn/ccd/ips.txt";
                                 docker exec -it $empresa.openvpn /bin/bash -c "touch /etc/openvpn/ccd/$empresa-$acceso";
-                                docker exec -it $empresa.openvpn /bin/bash -c "echo '10.247.$subnet.$ipClient 255.255.255.0' >> /etc/openvpn/ccd/$empresa-$acceso"
+                                docker exec -it $empresa.openvpn /bin/bash -c "echo 'ifconfig-push 10.247.$subnet.$ipClient 255.255.255.0' >> /etc/openvpn/ccd/$empresa-$acceso"
 else
                 echo -e "\e[31mla empresa $empresa no se encuentra dada de alta.\e[0m"
 fi
