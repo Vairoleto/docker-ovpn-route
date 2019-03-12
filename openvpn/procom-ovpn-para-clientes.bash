@@ -144,7 +144,7 @@ docker exec -d $empresa.openvpn /bin/bash -c "touch /etc/openvpn/ccd/ips.txt"
 
 # Add route so the host knows that all openvpn clients of this empresa are on this container
 sudo ip route add 10.247.$subnet.0/24 via 10.246.0.$dockernet
-sudo bash -c "echo '@reboot root route add -net 10.247.$subnet.0 netmask 255.255.255.0 gw 10.246.0.$dockernet' >> /etc/crontab"
+sudo bash -c "echo '@reboot root route add -net 10.247.$subnet.0 netmask 255.255.255.0 gw 10.246.0.$dockernet ## $empresa.ovpn' >> /etc/crontab"
 
 # We need to reload iptables rules after every restart and every new network added.
 docker exec -d $empresa.openvpn /bin/bash -c "sed -i '3ifi' /usr/local/bin/ovpn_run ; sed -i '3iiptables-restore /etc/openvpn/iptables.rules.v4' /usr/local/bin/ovpn_run ; sed -i '3iif [  -f /etc/openvpn/iptables.rules.v4 ]; then' /usr/local/bin/ovpn_run ; sed -i '3i# Load iptables rules' /usr/local/bin/ovpn_run" 
@@ -227,7 +227,7 @@ docker exec -d $empresa.openvpn /bin/bash -c "touch /etc/openvpn/ccd/ips.txt"
 
 # Add route so the host knows that all openvpn clients of this empresa are on this container
 sudo ip route add 10.247.$subnet.0/24 via 10.246.0.$dockernet
-sudo bash -c "echo '@reboot root route add -net 10.247.$subnet.0 netmask 255.255.255.0 gw 10.246.0.$dockernet' >> /etc/crontab"
+sudo bash -c "echo '@reboot root route add -net 10.247.$subnet.0 netmask 255.255.255.0 gw 10.246.0.$dockernet ## $empresa.ovpn' >> /etc/crontab"
 
 # We need to reload iptables rules after every restart and every new network added.
 docker exec -d $empresa.openvpn /bin/bash -c "sed -i '3ifi' /usr/local/bin/ovpn_run ; sed -i '3iiptables-restore /etc/openvpn/iptables.rules.v4' /usr/local/bin/ovpn_run ; sed -i '3iif [  -f /etc/openvpn/iptables.rules.v4 ]; then' /usr/local/bin/ovpn_run ; sed -i '3i# Load iptables rules' /usr/local/bin/ovpn_run" 
