@@ -144,6 +144,7 @@ docker exec -d $empresa.openvpn /bin/bash -c "touch /etc/openvpn/ccd/ips.txt"
 
 # Add route so the host knows that all openvpn clients of this empresa are on this container
 sudo ip route add 10.247.$subnet.0/24 via 10.246.0.$dockernet
+sudo bash -c "echo '@reboot root route add -net 10.247.$subnet.0 netmask 255.255.255.0 gw 10.246.0.$dockernet' >> /etc/crontab"
 
 # We need to reload iptables rules after every restart and every new network added.
 docker exec -d $empresa.openvpn /bin/bash -c "sed -i '3ifi' /usr/local/bin/ovpn_run ; sed -i '3iiptables-restore /etc/openvpn/iptables.rules.v4' /usr/local/bin/ovpn_run ; sed -i '3iif [  -f /etc/openvpn/iptables.rules.v4 ]; then' /usr/local/bin/ovpn_run ; sed -i '3i# Load iptables rules' /usr/local/bin/ovpn_run" 
@@ -226,6 +227,7 @@ docker exec -d $empresa.openvpn /bin/bash -c "touch /etc/openvpn/ccd/ips.txt"
 
 # Add route so the host knows that all openvpn clients of this empresa are on this container
 sudo ip route add 10.247.$subnet.0/24 via 10.246.0.$dockernet
+sudo bash -c "echo '@reboot root route add -net 10.247.$subnet.0 netmask 255.255.255.0 gw 10.246.0.$dockernet' >> /etc/crontab"
 
 # We need to reload iptables rules after every restart and every new network added.
 docker exec -d $empresa.openvpn /bin/bash -c "sed -i '3ifi' /usr/local/bin/ovpn_run ; sed -i '3iiptables-restore /etc/openvpn/iptables.rules.v4' /usr/local/bin/ovpn_run ; sed -i '3iif [  -f /etc/openvpn/iptables.rules.v4 ]; then' /usr/local/bin/ovpn_run ; sed -i '3i# Load iptables rules' /usr/local/bin/ovpn_run" 
@@ -338,7 +340,8 @@ if [ -z "$empresa" ];
                 docker exec -d $empresa.openvpn /bin/bash -c "iptables -i tun0 -I FORWARD 1 -d $ippriv/$mask -j ACCEPT"
                 subnet=$(docker exec -it ovpn.db sqlite3 /database/ovpn.db  "SELECT subnet FROM empresa WHERE nombre='$empresa';" | sed 's/[^0-9]*//g');
                 dockernet=$(docker exec -it ovpn.db sqlite3 /database/ovpn.db  "SELECT dockernet FROM empresa WHERE nombre='$empresa';" | sed 's/[^0-9]*//g');
-                sudo ip route add 10.247.$subnet.0/24 via 10.246.0.$dockernet
+                # esto no deberia estar aca, la ruta se crea cuando se da de alta el container, no cuando agregamos subredes a charlarse
+                #sudo ip route add 10.247.$subnet.0/24 via 10.246.0.$dockernet
                 sudo iptables -I DOCKER -s $ippriv/$mask -d 10.247.$subnet.0/24 -j ACCEPT
                 echo -e "\e[34mQuiere agregar otro servidor a $empresa? (y/n): \e[0m"
 fi
@@ -348,6 +351,7 @@ if echo "$answer" | grep -iq "^y" ;then
 else
    echo "Guardando cambios en iptables..." ; 
    docker exec -d $empresa.openvpn /bin/bash -c "iptables-save > /etc/openvpn/iptables.rules.v4" ;     
+   sudo netfilter-persistent save ;
    echo -e "\e[31mSus cambios no surtiran efecto hasta que el contenedor de $empresa sea reinciado. Desea reiniciarlo ahora? CUIDADO! esto desconectara a los usuarios de $empresa momentaneamente (y/n)\e[0m"
    read answer
                 if echo "$answer" | grep -iq "^y" ;then
