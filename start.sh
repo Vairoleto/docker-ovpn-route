@@ -82,9 +82,9 @@ docker build -t procom/ovpn.db ./sqlite/.
 # pull kylemanna/openvpn
 docker pull kylemanna/openvpn
 # run db container
-docker run -d --name=ovpn.db procom/ovpn.db
+docker run -d --name=ovpn.db --restart unless-stopped procom/ovpn.db
 # run cifs container
-docker run -d -v ovpn.cifs:/mnt/openvpn --name=ovpn.cifs --privileged --cap-add=MKNOD --cap-add=SYS_ADMIN --device=/dev/fuse procom/ovpn.cifs
+docker run -d -v ovpn.cifs:/mnt/openvpn --name=ovpn.cifs --privileged --cap-add=MKNOD --cap-add=SYS_ADMIN --device=/dev/fuse --restart unless-stopped procom/ovpn.cifs
 # copiar script de openvpn
 cp ./openvpn/procom-ovpn-para-clientes.bash /usr/bin/openvpn
 chmod +x /usr/bin/openvpn
