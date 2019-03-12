@@ -269,7 +269,7 @@ if docker exec -it ovpn.db sqlite3 /database/ovpn.db "SELECT EXISTS(SELECT 1 FRO
                                         do
                                         ipClient=$(shuf -i 10-240 -n 1)
                                         done
-                                subnet=$(docker exec -it ovpn.db sqlite3 /database/ovpn.db  "SELECT subnet FROM empresa WHERE nombre='$empresa';")     
+                                subnet=$(docker exec -it ovpn.db sqlite3 /database/ovpn.db  "SELECT subnet FROM empresa WHERE nombre='$empresa';" | sed 's/[^0-9]*//g'); 
                                 docker exec -it $empresa.openvpn /bin/bash -c "echo $ipClient >> /etc/openvpn/ccd/ips.txt";
                                 docker exec -it $empresa.openvpn /bin/bash -c "touch /etc/openvpn/ccd/$empresa-$acceso";
                                 docker exec -it $empresa.openvpn /bin/bash -c "echo '10.247.$subnet.$ipClient 255.255.255.0' >> /etc/openvpn/ccd/$empresa-$acceso"
@@ -334,7 +334,7 @@ if [ -z "$empresa" ];
                 read mask
                 docker exec $empresa.openvpn bash -c "echo push \'route $ippriv $mask\' >> /etc/openvpn/openvpn.conf";
                 docker exec -d $empresa.openvpn /bin/bash -c "iptables -i tun0 -I FORWARD 1 -d $ippriv/$mask -j ACCEPT"
-                subnet=$(docker exec -it ovpn.db sqlite3 /database/ovpn.db  "SELECT subnet FROM empresa WHERE nombre='$empresa';");
+                subnet=$(docker exec -it ovpn.db sqlite3 /database/ovpn.db  "SELECT subnet FROM empresa WHERE nombre='$empresa';" | sed 's/[^0-9]*//g');
                 sudo ip route add 10.247.$subnet.0/24 via 10.246.0.$dockernet
                 sudo iptables -I DOCKER -s $ippriv/$mask -d 10.247.$subnet.0/24 -j ACCEPT
                 echo -e "\e[34mQuiere agregar otro servidor a $empresa? (y/n): \e[0m"
