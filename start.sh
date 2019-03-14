@@ -93,6 +93,7 @@ docker_network
 echo iptables-persistent iptables-persistent/autosave_v4 boolean true | sudo debconf-set-selections
 echo iptables-persistent iptables-persistent/autosave_v6 boolean true | sudo debconf-set-selections
 sudo apt-get -y install iptables-persistent
+sudo bash -c "echo '@reboot root sleep 20 && sudo netfilter-persistent start ## sometimes iptables rules wont reload at boot' >> /etc/crontab"
 }
 
 docker_network()
