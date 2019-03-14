@@ -285,7 +285,7 @@ if docker exec -it ovpn.db sqlite3 /database/ovpn.db "SELECT EXISTS(SELECT 1 FRO
                                 docker exec -it $empresa.openvpn /bin/bash -c "echo $ipClient >> /etc/openvpn/ccd/ips.txt";
                                 docker exec -it $empresa.openvpn /bin/bash -c "touch /etc/openvpn/ccd/$empresa-$acceso";
                                 docker exec -it $empresa.openvpn /bin/bash -c "echo 'ifconfig-push 10.247.$subnet.$ipClient 255.255.255.0' >> /etc/openvpn/ccd/$empresa-$acceso"
-                                docker exec -it ovpn.db sqlite3 /database/ovpn.db "INSERT INTO $empresa (ACCESO,IP) VALUES ('$acceso', '10.247.$subnet.$ipClient');"
+                                docker exec -d ovpn.db sqlite3 /database/ovpn.db "INSERT INTO $empresa (ACCESO,IP) VALUES ('$acceso', '10.247.$subnet.$ipClient');"
 else
                 echo -e "\e[31mla empresa $empresa no se encuentra dada de alta.\e[0m"
 fi
@@ -440,7 +440,7 @@ read empresa
 if docker exec -it ovpn.db sqlite3 /database/ovpn.db "SELECT EXISTS(SELECT 1 FROM empresa WHERE nombre='$empresa' COLLATE NOCASE);" | grep -q '1';
         then
 echo -e "\e[34m================ Redes enrutadas para $empresa ================\e[0m"
-docker exec -it ovpn.db sqlite3 /database/ovpn.db '.header on' '.mode column' 'SELECT acceso, ip FROM $empresa;'
+docker exec -it ovpn.db sqlite3 /database/ovpn.db '.header on' '.mode column' "SELECT acceso, ip FROM $empresa;"
 main_menu
         else
                 echo -e "\e[31mla empresa $empresa no se encuentra dada de alta.\e[0m"
