@@ -439,7 +439,7 @@ echo -e "\e[34mIngrese nombre de la empresa: \e[0m"
 read empresa
 if docker exec -it ovpn.db sqlite3 /database/ovpn.db "SELECT EXISTS(SELECT 1 FROM empresa WHERE nombre='$empresa' COLLATE NOCASE);" | grep -q '1';
         then
-echo -e "\e[34m================ Redes enrutadas para $empresa ================\e[0m"
+echo -e "\e[34m================ IP de clientes creados en $empresa ================\e[0m"
 docker exec -it ovpn.db sqlite3 /database/ovpn.db '.header on' '.mode column' "SELECT acceso, ip FROM $empresa;"
 main_menu
         else
