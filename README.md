@@ -4,7 +4,7 @@ alpine docker containers that ease the management of openvpn on docker
 Just clone this repo
 
 ```
-git clone https://github.com/Vairoleto/docker-ovpn
+git clone https://github.com/Vairoleto/docker-ovpn-route
 ```
 chmod +x the start.sh script
 
